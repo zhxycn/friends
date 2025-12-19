@@ -5,9 +5,9 @@ on:
     branches:
       - main
     paths:
-      - images/**
-      - linklist.yml
       - .github/workflows/s3-sync.yml
+      - linklist.yml
+      - images/**
   workflow_dispatch:
 
 env:
@@ -25,7 +25,3 @@ jobs:
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: ap-southeast-1
       - run: aws s3 sync "${{ env.SOURCE_DIR }}" "s3://${{ secrets.S3_BUCKET }}/${{ env.DEST_PREFIX }}/images" --delete
-      - name: Preprocess linklist.yml
-        run: |
-          sed -i 's|image: "/images|image: "${{ secrets.STATIC_URL }}/${{ env.DEST_PREFIX }}/images|g' linklist.yml
-      - run: aws s3 cp linklist.yml "s3://${{ secrets.S3_BUCKET }}/${{ env.DEST_PREFIX }}/linklist.yml"
