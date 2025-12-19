@@ -1,0 +1,84 @@
+name: Lint
+
+on:
+  pull_request:
+    paths:
+      - .github/workflows/lint.yml
+      - linklist.yml
+      - images/**
+  push:
+    branches:
+      - main
+    paths:
+      - .github/workflows/lint.yml
+      - linklist.yml
+      - images/**
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.x"
+      - run: pip install pyyaml
+      - name: Validate schema
+        run: |
+          python - << 'PY'
+          import yaml, re, sys, os
+          path = os.path.join(os.getcwd(), 'linklist.yml')
+          try:
+              with open(path, 'r', encoding='utf-8') as f:
+                  data = yaml.safe_load(f)
+          except FileNotFoundError:
+              print(f'file not found: {path}')
+              sys.exit(1)
+          errs = []
+          friends = data.get('friends')
+          if not isinstance(friends, list):
+              errs.append('friends must be a list')
+          def nonempty(s):
+              return isinstance(s, str) and len(s.strip()) > 0
+          yaml_images = set()
+          for i, item in enumerate(friends or []):
+              if not nonempty(item.get('title')):
+                  errs.append(f'[{i}] title must be non-empty string')
+              if not nonempty(item.get('description')):
+                  errs.append(f'[{i}] description must be non-empty string')
+              img = item.get('image')
+              link = item.get('link')
+              mimg = re.match(r'^/images/([a-zA-Z0-9.-]+)/avatar\.(webp|png|jpg|svg)$', img or '')
+              if not mimg:
+                  errs.append(f'[{i}] image must match /images/{{domain}}/avatar.(webp|png|jpg|svg), got: {img}')
+              mlink = re.match(r'^https://([a-zA-Z0-9.-]+)(/)?$', link or '')
+              if not mlink:
+                  errs.append(f'[{i}] link must match https://{{domain}}, got: {link}')
+              if mimg and mlink and mimg.group(1) != mlink.group(1):
+                  errs.append(f'[{i}] domain mismatch between image and link: {mimg.group(1)} vs {mlink.group(1)}')
+              if img:
+                  yaml_images.add(img)
+          root = os.path.join(os.getcwd(), 'images')
+          fs_images = set()
+          if os.path.isdir(root):
+              for dirpath, dirnames, filenames in os.walk(root):
+                  for fn in filenames:
+                      if fn.startswith('avatar.') and fn.split('.')[-1] in {'webp','png','jpg','svg'}:
+                          rel = os.path.relpath(os.path.join(dirpath, fn), os.getcwd()).replace('\\','/')
+                          fs_images.add('/' + rel)
+          for img in yaml_images:
+              p = os.path.join(os.getcwd(), img.lstrip('/'))
+              if not os.path.exists(p):
+                  errs.append(f'yaml image file not found: {img}')
+          for f in sorted(fs_images):
+              if f not in yaml_images:
+                  errs.append(f'images folder file missing in linklist.yml: {f}')
+          if errs:
+              print('\n'.join(errs))
+              sys.exit(1)
+          else:
+              print('validation passed')
+              sys.exit(0)
+          PY
