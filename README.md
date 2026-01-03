@@ -1,11 +1,11 @@
-# [好伙伴们](https://www.owo.cab/friends/)
+# [好伙伴们](https://owo.cab/friends/)
 
 ## 成为好伙伴
 
 ### 本站信息
 
 - 名称: `拾星絮语`
-- 链接: `https://www.owo.cab`
+- 链接: `https://owo.cab`
 - 图标: `https://static.owo.cab/avatar.webp`
 - 简介: `银汉凝睫上，璇玑坠瞳渊~`
 
@@ -41,6 +41,6 @@
 ## 开启 PR 后会发生什么
 
 - 等待流水线运行检查，若流水线未通过，可以通过流水线日志来定位问题，也可以看看改动是否符合[提交规范](#提交规范)；
-- 在 PR 被合并后的 24 小时内，你的网站会在[这里](https://www.owo.cab/friends/)展示。
+- 在 PR 被合并后的 24 小时内，你的网站会在[这里](https://owo.cab/friends/)展示。
 
 网站失联一段时间后会被移除。若站点信息有变更，可以重新开启 PR 来更新站点信息~
