@@ -1,0 +1,33 @@
+name: Sync
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - .github/workflows/sync.yml
+      - linklist.yml
+      - images/**
+  workflow_dispatch:
+
+env:
+  SOURCE_DIR: images
+  DEST_PREFIX: blog/friends
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: |
+          LATEST=$(curl -fsSL https://api.github.com/repos/tencentyun/coscli/releases/latest | grep -oP '"tag_name":\s*"\K[^"]+')
+          curl -fsSL -o coscli "https://github.com/tencentyun/coscli/releases/download/${LATEST}/coscli-${LATEST}-linux-amd64"
+          chmod +x coscli
+      - run: |
+          ./coscli sync "${{ env.SOURCE_DIR }}/" "cos://${{ secrets.COS_BUCKET }}/${{ env.DEST_PREFIX }}" \
+            --init-skip=true \
+            -e "cos.ap-shanghai.myqcloud.com" \
+            -i "${{ secrets.COS_SECRET_ID }}" \
+            -k "${{ secrets.COS_SECRET_KEY }}" \
+            -r \
+            --delete
